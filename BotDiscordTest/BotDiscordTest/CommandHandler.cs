@@ -44,7 +44,7 @@ namespace BotDiscordTest
             } 
             else if (Program.UserId == user1.ToString())
             {
-                var media = await Test.ExtractMedia(Program.Links[int.Parse(msg.ToString())]);
+                var media = await Test.ExtractMedia(Program.Links[int.Parse(msg.ToString())-1]);
                 
                 await context.Channel.SendMessageAsync("https://www.signingsavvy.com/" + media);
                 
