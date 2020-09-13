@@ -1,5 +1,7 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
+using System.Xml;
 using Discord.WebSocket;
 using TokenType = Discord.TokenType;
 
@@ -7,9 +9,14 @@ namespace BotDiscordTest
 {
     public class Program
     {
-        public static string UserId = "someRandomShit";
-        public static string[] Links;
+        public struct ReturnLink
+        {
+            public string AsInContext;
+            public string Link;
+        }
 
+        public static Dictionary<string, ReturnLink[]> StoredUserResponseDict;
+        
         private static void Main(string[] args)
             => new Program().StartAsync().GetAwaiter().GetResult();
 

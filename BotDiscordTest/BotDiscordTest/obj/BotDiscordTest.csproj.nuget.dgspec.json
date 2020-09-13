@@ -1,25 +1,30 @@
 {
   "format": 1,
   "restore": {
-    "E:\\BotDiscordTest\\BotDiscordTest\\BotDiscordTest.csproj": {}
+    "D:\\VRCMod\\SavvyBot\\BotDiscordTest\\BotDiscordTest\\BotDiscordTest.csproj": {}
   },
   "projects": {
-    "E:\\BotDiscordTest\\BotDiscordTest\\BotDiscordTest.csproj": {
+    "D:\\VRCMod\\SavvyBot\\BotDiscordTest\\BotDiscordTest\\BotDiscordTest.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "E:\\BotDiscordTest\\BotDiscordTest\\BotDiscordTest.csproj",
+        "projectUniqueName": "D:\\VRCMod\\SavvyBot\\BotDiscordTest\\BotDiscordTest\\BotDiscordTest.csproj",
         "projectName": "BotDiscordTest",
-        "projectPath": "E:\\BotDiscordTest\\BotDiscordTest\\BotDiscordTest.csproj",
-        "packagesPath": "C:\\Users\\CASA\\.nuget\\packages\\",
-        "outputPath": "E:\\BotDiscordTest\\BotDiscordTest\\obj\\",
+        "projectPath": "D:\\VRCMod\\SavvyBot\\BotDiscordTest\\BotDiscordTest\\BotDiscordTest.csproj",
+        "packagesPath": "C:\\Users\\Ben\\.nuget\\packages\\",
+        "outputPath": "D:\\VRCMod\\SavvyBot\\BotDiscordTest\\BotDiscordTest\\obj\\",
         "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
+        ],
         "configFilePaths": [
-          "C:\\Users\\CASA\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\Ben\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
           "netcoreapp3.1"
         ],
         "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -88,7 +93,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Users\\CASA\\.dotnet\\sdk\\3.1.302\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\3.1.401\\RuntimeIdentifierGraph.json"
         }
       }
     }
