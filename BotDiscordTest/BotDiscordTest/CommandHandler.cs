@@ -42,13 +42,15 @@ namespace BotDiscordTest
             {
                 var unused = await _service.ExecuteAsync(context, argPos, null);
             } 
-            else if (Program.UserId == user1.ToString())
+            else if (Program.StoredUserResponseDict.ContainsKey(user1.ToString()))
             {
-                var media = await Test.ExtractMedia(Program.Links[int.Parse(msg.ToString())-1]);
+                var signResponses = Program.StoredUserResponseDict[user1.ToString()];
+                var chosenLink = signResponses[int.Parse(msg.ToString()) - 1];
+                var media = Test.ExtractMedia(chosenLink.Link);
                 
                 await context.Channel.SendMessageAsync("https://www.signingsavvy.com/" + media);
-                
-                Program.UserId = "SomeRAndo#6969lol";
+
+                Program.StoredUserResponseDict.Remove(user1.ToString());
             }
         }
     }
