@@ -1,14 +1,21 @@
-﻿using System.IO;
+using System.IO;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Discord.WebSocket;
+using System.Xml;
 using TokenType = Discord.TokenType;
 
 namespace BotDiscordTest
 {
     public class Program
     {
-        public static string UserId = "someRandomShit";
-        public static string[] Links;
+        public struct ReturnLink
+        {
+            public string AsInContext;
+            public string Link;
+        }
+        
+        public static Dictionary<string, ReturnLink[]> StoredUserResponseDict = new Dictionary<string, ReturnLink[]>();
 
         private static void Main(string[] args)
             => new Program().StartAsync().GetAwaiter().GetResult();
