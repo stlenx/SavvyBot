@@ -5,9 +5,10 @@ using System.Net.Http;
 using Newtonsoft.Json;
 using Discord.Commands;
 using System.Threading.Tasks;
-using System.Text.RegularExpressions;
+using HtmlAgilityPack;
 using Random = System.Random;
 using Newtonsoft.Json.Linq;
+using ScrapySharp.Extensions;
 
 namespace BotDiscordTest.Modules
 
@@ -16,6 +17,7 @@ namespace BotDiscordTest.Modules
     {
         private string _signUrl;
         private static readonly HttpClient Client = new HttpClient();
+        private static HtmlWeb _web = new HtmlWeb();
 
         #region Hentai
 
@@ -112,7 +114,7 @@ namespace BotDiscordTest.Modules
             
             var url = "https://www.signingsavvy.com/search/" + realUrl;
 
-            _signUrl = await ExtractMedia(url);
+            _signUrl = ExtractMedia(url);
 
             if (_signUrl != "")
             {
@@ -126,8 +128,8 @@ namespace BotDiscordTest.Modules
         
         private async Task GetOtherStuff(string html)
         {
-            var meaningList = await Text(html);
-            var list = await ExtractSigns(html);
+            var meaningList = Text(html);
+            var list = ExtractSigns(html);
             
             if (list.Count <= 1)
             {
@@ -135,55 +137,53 @@ namespace BotDiscordTest.Modules
             }
             else
             {
-                Program.UserId = Context.User.ToString();
                 var message = "";
-                
-                var links = new string[list.Count];
+                var links = new Program.ReturnLink[list.Count];
                 for (var i = 0; i < list.Count; i++)
                 {
-                    links[i] = "https://www.signingsavvy.com/" + list[i];
+                    links[i].Link = "https://www.signingsavvy.com/" + list[i];
+                    links[i].AsInContext = "";
                     message += (i+1) + ": " + meaningList[i] + "\n";
                 }
-                Program.Links = links;
+                Program.StoredUserResponseDict.Add(Context.User.ToString(), links);
                 await Context.Channel.SendMessageAsync(message + "\n" + "reply the number for the sign you want");
             }
         }
-        public static async Task<string> ExtractMedia(string url)
+        public static string ExtractMedia(string url)
         {
-            var html = await Client.GetStringAsync(url);
             var output = "";
-        
-            var regex = new Regex("(?:href)=[\"]?(media/.*?)[\"]+", RegexOptions.Singleline | RegexOptions.CultureInvariant);
-            if (!regex.IsMatch(html)) return output;
-            foreach (Match match in regex.Matches(html))
-            {
-                output = match.Groups[1].Value;
-            }
+            
+            var doc = _web.Load(url);
+
+            if (doc.DocumentNode.SelectSingleNode("//div[@class='videocontent']") == null) return output;
+            var search = doc.DocumentNode.CssSelect(".videocontent");
+            var node = search.CssSelect("link").First();
+            output = node.GetAttributeValue("href");
+            
             return output;
         }
-        private static async Task<List<string>> ExtractSigns(string url)
+        private static List<string> ExtractSigns(string url)
         {
-            var html = await Client.GetStringAsync(url);
             var output = new List<string>();
-        
-            var regex = new Regex("(?:href)=[\"]?(sign/.*?)[\"]+", RegexOptions.Singleline | RegexOptions.CultureInvariant);
-            if (!regex.IsMatch(html)) return output;
-            foreach (Match match in regex.Matches(html))
+            
+            var doc = _web.Load(url);
+            var search = doc.DocumentNode.CssSelect(".search_results");
+            foreach (var node in search.CssSelect("a"))
             {
-                output.Add(match.Groups[1].Value);
+                output.Add(node.GetAttributeValue("href",""));
             }
             return output;
         }
-        private static async Task<List<string>> Text(string url)
+        private static List<string> Text(string url)
         {
-            var html = await Client.GetStringAsync(url);
             var list = new List<string>();
-            var regex = new Regex("(as in [\"|']?(.*?)[\"|'|>])+", RegexOptions.Singleline | RegexOptions.CultureInvariant);
-            if (!regex.IsMatch(html)) return list;
-            foreach (Match match in regex.Matches(html))
+            var doc = _web.Load(url);
+            var search = doc.DocumentNode.CssSelect(".search_results");
+            foreach (var node in search.CssSelect("li"))
             {
-                var internalArr = match.Groups[1].Value.Split("&quot");
-                var value = internalArr[0] + internalArr[1];
+                var result = node.CssSelect("em").First();
+                var internalArr = result.InnerHtml.Split("&quot");
+                var value = internalArr[0] + internalArr[1] + internalArr[2];
                 list.Add(value);
             }
             return list;
