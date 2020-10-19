@@ -24,7 +24,7 @@ namespace SavvyBot
             
             var config = new DiscordConfiguration
             {
-                Token = "NzM2NzE4MDI2OTkyMjU1MDM3.Xxy4IQ.d2aPgJlEr-xBcVNjzAG9UG-koK8",
+                Token = "",
                 TokenType = TokenType.Bot,
                 AutoReconnect = true,
                 LogLevel = LogLevel.Debug,
