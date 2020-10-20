@@ -1,6 +1,6 @@
 <h1>Introducion 📝</h1>
 
-Discord bot written in c# using DSharp+.
+Discord bot written in c# using <a href="https://github.com/DSharpPlus/DSharpPlus">DSharp+</a>.
 It's main function is to search signs in asl, and replies with a video of the sign.
 
 The videos are taken from https://www.signingsavvy.com/ if you use the !asl command. There are other commands for other pages, but are not
