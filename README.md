@@ -20,5 +20,6 @@ All commands must be preceded by '!'
 <h1>Special thanks 😂</h1>
 
 https://github.com/benaclejames for the vrasl api! :)
+https://github.com/mymakerofficial for absolutely nothing.
 
 You are free to use any code here, or eat it if you like italian food.
