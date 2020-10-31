@@ -1,4 +1,4 @@
-<h1>Introducion 📝</h1>
+## Introducion 📝
 
 Discord bot written in c# using <a href="https://github.com/DSharpPlus/DSharpPlus">DSharp+</a>.
 It's main function is to search signs in asl, and replies with a video of the sign.
@@ -6,7 +6,7 @@ It's main function is to search signs in asl, and replies with a video of the si
 The videos are taken from https://www.signingsavvy.com/ if you use the !asl command. There are other commands for other pages, but are not
 fully implemented.
 
-<h1>Commands 👌</h1>
+## Commands 👌
 
 All commands must be preceded by '!'
 
@@ -17,10 +17,9 @@ All commands must be preceded by '!'
 - **asltest** Searches for a random sign in signingsavvy.com and you have to guess which one it is | ex: !asltest
 - **daysign** Gives the sign of the day by signsingsavvy.com | ex: !daysign
 
-<h1>Special thanks 😂</h1>
+## Special thanks 😂
+[Benacle](https://github.com/benaclejames) for the vrasl api! :)
 
-<a href="https://github.com/benaclejames">Benacle</a> for the vrasl api! :)
-
-<a href="https://github.com/mymakerofficial"> Maiker</a> for absolutely nothing
+[Maker](https://github.com/mymakerofficial) for absolutely nothing
 
 You are free to use any code here, or eat it if you like italian food.
