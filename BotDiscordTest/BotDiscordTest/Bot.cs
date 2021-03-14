@@ -13,6 +13,9 @@ namespace SavvyBot
 {
     public class Bot
     {
+        public static Dictionary<string, string> cache = new Dictionary<string, string>();
+        public static Dictionary<string, List<string>> cacheList = new Dictionary<string, List<string>>();
+        
         private DiscordClient Client { get; set; }
         private VoiceNextClient Voice { get; set; }
         private CommandsNextModule Commands { get; set; }
