@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -14,22 +14,23 @@ using ScrapySharp.Extensions;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
-using static System.Console;
+using Quartz;
+using Quartz.Impl;
 
 namespace SavvyBot.Commands
 {
     public class AslCommands
     {
-        static HttpClient client = new HttpClient();
-        private static HtmlWeb _web = new HtmlWeb();
-        private static HtmlDocument doc;
-        static DiscordEmbedBuilder embed = new DiscordEmbedBuilder();
+        private static readonly HttpClient Client = new HttpClient();
+        private static readonly HtmlWeb Web = new HtmlWeb();
+        private static HtmlDocument _doc;
+        private static readonly DiscordEmbedBuilder Embed = new DiscordEmbedBuilder();
 
         [Command("dadjoke")]
-        public async Task DadJoke(CommandContext Context)
+        public async Task DadJoke(CommandContext context)
         {
-            client.DefaultRequestHeaders.Add("Accept","application/json");
-            var response = await client.GetAsync("https://icanhazdadjoke.com/");
+            Client.DefaultRequestHeaders.Add("Accept","application/json");
+            var response = await Client.GetAsync("https://icanhazdadjoke.com/");
             
             if (response.IsSuccessStatusCode)
             {
@@ -38,7 +39,8 @@ namespace SavvyBot.Commands
                 
                 dynamic tmp = JsonConvert.DeserializeObject(responseBody);
 
-                if (tmp != null) await Context.Channel.SendMessageAsync((string) tmp.joke);
+                Console.WriteLine(tmp);
+                if (tmp != null) await context.Channel.SendMessageAsync((string) tmp.joke);
             }
         }
 
@@ -46,34 +48,31 @@ namespace SavvyBot.Commands
         public async Task WouldYouPressTheButton(CommandContext context)
         {
             PeeLol();
-            embed.Color = DiscordColor.Azure;
+            Embed.Color = DiscordColor.Azure;
             var interactivity = context.Client.GetInteractivityModule();
-            var content = new JsonContent {sign = "cow", type = "VRSL"};
-
-            var stringPayload = await Task.Run(() => JsonConvert.SerializeObject(content));
-            var httpContent = new StringContent(stringPayload, Encoding.UTF8, "application/json");
-            var response = await client.PostAsync("https://api2.willyoupressthebutton.com/api/v2/dilemma/", httpContent);
-            var responseString = await response.Content.ReadAsStringAsync();
-            var jsonApi = JObject.Parse(responseString);
+            
+            var httpContent = new StringContent(string.Empty, Encoding.UTF8, "application/json");
+            var response = await Client.PostAsync("https://api2.willyoupressthebutton.com/api/v2/dilemma/", httpContent);
+            var jsonApi = JObject.Parse(await response.Content.ReadAsStringAsync());
             
             var txt1 = jsonApi["dilemma"]?["txt1"]?.ToObject<string>();
             var txt2 = jsonApi["dilemma"]?["txt2"]?.ToObject<string>();
-            embed.Title = "Would you press the button?";
-            embed.Description = txt1.Replace("&#039;", "'") + " but, \n" + txt2.Replace("&#039;", "'");
-            await context.Channel.SendMessageAsync("", false, embed);
+            Embed.Title = "Would you press the button?";
+            Embed.Description = txt1?.Replace("&#039;", "'") + " but, \n" + txt2?.Replace("&#039;", "'");
+            await context.Channel.SendMessageAsync("", false, Embed);
 
             var reply = await interactivity.WaitForMessageAsync(x => x.Channel == context.Channel && x.Author == context.User && x.Content.ToLower() == "yes" || x.Content.ToLower() == "no");
 
             var yes = jsonApi["dilemma"]?["yes"]?.ToObject<float>();
             var no = jsonApi["dilemma"]?["no"]?.ToObject<float>();
-            embed.Title = "Button";
+            Embed.Title = "Button";
             if (reply.Message.Content.ToLower() == "yes")
             {
                 var percentage = (yes / (yes + no)) * 100;
                 if (percentage != null)
                 {
-                    embed.Description = (int) percentage + "% of people said yes";
-                    await context.Channel.SendMessageAsync("", false, embed);
+                    Embed.Description = (int) percentage + "% of people said yes";
+                    await context.Channel.SendMessageAsync("", false, Embed);
                 }
             }
             else
@@ -81,8 +80,8 @@ namespace SavvyBot.Commands
                 var percentage = (no / (yes + no)) * 100;
                 if (percentage != null)
                 {
-                    embed.Description = (int) percentage + "% of people said no";
-                    await context.Channel.SendMessageAsync("", false, embed);
+                    Embed.Description = (int) percentage + "% of people said no";
+                    await context.Channel.SendMessageAsync("", false, Embed);
                 }
             }
         }
@@ -90,29 +89,29 @@ namespace SavvyBot.Commands
         [Command("pee")]
         public async Task Pee(CommandContext context)
         {
-            embed.Title = "pee";
-            embed.Description = "";
-            embed.ImageUrl =
+            Embed.Title = "pee";
+            Embed.Description = "";
+            Embed.ImageUrl =
                 "https://cdn.discordapp.com/attachments/735641365320302593/767028760268111933/20200905232425_1.jpg";
-            await context.Channel.SendMessageAsync("", false, embed);
+            await context.Channel.SendMessageAsync("", false, Embed);
         }
 
         #region asl Shit
         
         [Command("hs")]
-        public async Task HandSpeak(CommandContext Context,string sign)
+        public async Task HandSpeak(CommandContext context, string sign)
         {
             PeeLol();
             if (CheckUrlStatus("https://www.handspeak.com/word/" + sign[0] + "/" + sign + ".mp4"))
             {
-                await Context.Channel.SendMessageAsync("https://www.handspeak.com/word/" + sign[0] + "/" + sign + ".mp4");
+                await context.Channel.SendMessageAsync("https://www.handspeak.com/word/" + sign[0] + "/" + sign + ".mp4");
             }
             else
             {
-                embed.Color = DiscordColor.Azure;
-                embed.Title = "Hand Speak";
-                embed.Description = "Sign not found :confused:";
-                await Context.Channel.SendMessageAsync("", false, embed);
+                Embed.Color = DiscordColor.Azure;
+                Embed.Title = "Hand Speak";
+                Embed.Description = "Sign not found :confused:";
+                await context.Channel.SendMessageAsync("", false, Embed);
             }
         }
 
@@ -120,14 +119,14 @@ namespace SavvyBot.Commands
         public async Task SpreadTheStign(CommandContext context, string sign)
         {
             PeeLol();
-            var load = _web.Load("https://www.spreadthesign.com/en.us/search/?q=" + sign);
+            var load = Web.Load("https://www.spreadthesign.com/en.us/search/?q=" + sign);
 
             if (load.DocumentNode.SelectSingleNode("//div[@class='col-md-7']") == null)
             {
-                embed.Color = DiscordColor.Azure;
-                embed.Title = "Hand Speak";
-                embed.Description = "Sign not found :confused:";
-                await context.Channel.SendMessageAsync("", false, embed);
+                Embed.Color = DiscordColor.Azure;
+                Embed.Title = "Spread the sign";
+                Embed.Description = "Sign not found :confused:";
+                await context.Channel.SendMessageAsync("", false, Embed);
             }
             else
             {
@@ -138,43 +137,68 @@ namespace SavvyBot.Commands
         }
 
         [Command("vrasl")]
-        public async Task Tasl(CommandContext Context, string sign)
+        public async Task Tasl(CommandContext context, string sign)
         {
             PeeLol();
             var content = new JsonContent {sign = sign, type = "VRSL"};
 
             var stringPayload = await Task.Run(() => JsonConvert.SerializeObject(content));
             var httpContent = new StringContent(stringPayload, Encoding.UTF8, "application/json");
-            var response = await client.PostAsync("http://18.133.33.219:3000/signsearch", httpContent);
+            var response = await Client.PostAsync("http://18.133.33.219:3000/signsearch", httpContent);
             
             var responseString = await response.Content.ReadAsStringAsync();
             var jsonApi = JObject.Parse(responseString);
             
             if (jsonApi["result"]?.ToString() == "SignNotFound")
             {
-                await IrlSign(Context, sign, 1);
+                try
+                {
+                    await IrlSign(context, sign, 1);
+                }
+                catch (Exception)
+                {
+                    Embed.Description = "Sign not found :confused:";
+                    await context.Channel.SendMessageAsync("", false, Embed);
+                    throw;
+                }
             }
             else
             {
-                await Context.Channel.SendMessageAsync(jsonApi["result"]?["url"]?.ToString());
+                await context.Channel.SendMessageAsync(jsonApi["result"]?["url"]?.ToString());
             }
         }
         
         [Command("asl")]
-        public async Task Irlasl(CommandContext Context, params string[] sign)
+        public async Task Irlasl(CommandContext context, params string[] sign)
         {
             PeeLol();
-            embed.Color = DiscordColor.Azure;
-            embed.Title = "Signing Savvy";
-            var input = sign.Aggregate("", (current, t) => current + (t + " "));
+            Embed.Color = DiscordColor.Azure;
+            Embed.Title = "Signing Savvy";
+            var input = RemoveSpecialChars(sign.Aggregate("", (current, t) => current + (t + " ")));
             var selection = ContainsInt(sign) ?? 1;
-            await IrlSign(Context, input, selection);
+            if (Bot.cache.ContainsKey(input + " | " + selection))
+            {
+                await context.Channel.SendMessageAsync(Bot.cache[input + " | " + selection]);
+            }
+            else
+            {
+                try
+                {
+                    await IrlSign(context, input, selection);
+                }
+                catch (Exception)
+                {
+                    Embed.Description = "Sign not found :confused:";
+                    await context.Channel.SendMessageAsync("", false, Embed);
+                    throw;
+                }
+            }
         }
 
         [Command("daysign")]
         public async Task SignOfTheDay(CommandContext context)
         {
-            var website = _web.Load("https://www.signingsavvy.com/");
+            var website = Web.Load("https://www.signingsavvy.com/");
             
             var searchTwo = website.GetElementbyId("sotd");
             var a = searchTwo.CssSelect("p").ToArray();
@@ -189,15 +213,37 @@ namespace SavvyBot.Commands
         {
             PeeLol();
             var interactivity = context.Client.GetInteractivityModule();
-            Random random = new Random();
-            int a = random.Next(0, 26);
-            char ch = (char)('A' + a);
+            var random = new Random();
+            var a = random.Next(0, 26);
+            var ch = (char)('A' + a);
             
-            var site = _web.Load("https://www.signingsavvy.com/browse/" + ch);
+            var site = Web.Load("https://www.signingsavvy.com/browse/" + ch);
             var search = site.DocumentNode.CssSelect(".search_results");
             var htmlNodes = search.CssSelect("li").ToArray();
 
             var rnd = random.Next(0,htmlNodes.Length);
+
+            
+            /*
+            char[] letters = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z' };
+
+            foreach (var letter in letters)
+            {
+                var site = Web.Load("https://www.signingsavvy.com/browse/" + letter);
+                var search = site.DocumentNode.CssSelect(".search_results");
+                var htmlNodes = search.CssSelect("li").ToArray();
+                foreach (var node in htmlNodes)
+                {
+                    var nodesLol = node.CssSelect("a").ToArray();
+                    var contextLol = node.CssSelect("em").ToArray();
+                    var link = ExtractMedia("https://www.signingsavvy.com/" + nodesLol[0].GetAttributeValue("href"));
+                    Console.WriteLine(link);
+                }
+            }
+            */
+
+
+            
 
             var nodesLol = htmlNodes[rnd].CssSelect("a").ToArray();
             var contextLol = htmlNodes[rnd].CssSelect("em").ToArray();
@@ -213,15 +259,15 @@ namespace SavvyBot.Commands
             }
 
             var user = context.User.ToString().Split('(');
-            await context.Channel.SendMessageAsync("https://www.signingsavvy.com/" + link + "\n" + "What is this sign? You have 3 attempts | Requested by: " + user[1].Trim(')'));
+            await context.Channel.SendMessageAsync(link + "\n" + "What is this sign? You have 3 attempts | Requested by: " + user[1].Trim(')'));
 
             Console.WriteLine(nodesLol[0].InnerText.ToLower());
             Console.WriteLine(value);
             var i = 0;
             var poguMessage = string.Empty;
             
-            embed.Color = DiscordColor.Azure;
-            embed.Title = "Asl Test";
+            Embed.Color = DiscordColor.Azure;
+            Embed.Title = "Asl Test";
             
             while (i < 3)
             {
@@ -229,40 +275,41 @@ namespace SavvyBot.Commands
                     (x => x.Channel == context.Channel && x.Author == context.User);
                 if (words.Contains(reply.Message.Content.ToLower()))
                 {
-                    embed.Description = "Good job! you got it :smile:";
-                    await context.Channel.SendMessageAsync("", false, embed);
+                    Embed.Description = "Good job! you got it :smile:";
+                    await context.Channel.SendMessageAsync("", false, Embed);
                     i = 10;
                     break;
                 }
                 i++;
                 if ((3 - i) == 0) continue;
-                embed.Description = "Nope, you've got " + (3 - i) + " attempts left";
-                await context.Channel.SendMessageAsync("", false, embed);
+                Embed.Description = "Nope, you've got " + (3 - i) + " attempts left";
+                await context.Channel.SendMessageAsync("", false, Embed);
             }
 
             poguMessage = words.Where((t, x) => x < 5).Aggregate(poguMessage, (current, t) => current + (t + " | "));
 
             if (i != 10)
             {
-                embed.Description = "Too bad, try again next time!" + "\n" + "The sign was: " + poguMessage + value;
-                await context.Channel.SendMessageAsync("", false, embed);
+                Embed.Description = "Too bad, try again next time!" + "\n" + "The sign was: " + poguMessage + value;
+                await context.Channel.SendMessageAsync("", false, Embed);
             }
             else
             {
-                embed.Description = "The sign was: " + poguMessage + value;
-                await context.Channel.SendMessageAsync("", false, embed);
+                Embed.Description = "The sign was: " + poguMessage + value;
+                await context.Channel.SendMessageAsync("", false, Embed);
             }
+            
         }
 
         #endregion
         
         [Command("help")]
-        public async Task Help(CommandContext Context)
+        public async Task Help(CommandContext context)
         {
             PeeLol();
-            embed.Color = DiscordColor.Azure;
-            embed.Title = "Commands";
-            embed.Description = "!dadjoke - Gives random dad joke \n" +
+            Embed.Color = DiscordColor.Azure;
+            Embed.Title = "Commands";
+            Embed.Description = "!dadjoke - Gives random dad joke \n" +
                                 "!asl - Gives the sign for the word you send (ex: !asl hello) \n" +
                                 "!vrasl- Gives the sign for the word you send (vr) (ex: !asl hello) (returns normal sign if not found) \n" +
                                 "!daysign - Gives the sign of the day \n" +
@@ -270,41 +317,136 @@ namespace SavvyBot.Commands
                                 "!hs - Gives the sign for the word you send from handspeak (experimental, only one word) \n" +
                                 "!bsl - Gives the sign for the word you send in bsl (temporal, not 100% viable) \n" +
                                 "!sts - Gives the sign for the word you send from Spread The Sign";
-
-            await Context.Channel.SendMessageAsync("", false, embed);
+            await context.Channel.SendMessageAsync("", false, Embed);
         }
-        private async Task IrlSign(CommandContext Context, string sign, int selection)
+
+        [Command("remember")]
+        public async Task Remember(CommandContext context, params int[] nums)
         {
-            var signn = RemoveSpecialChars(sign);
-            var url = "https://www.signingsavvy.com/search/" + signn;
+            if (context.User.ToString() != "stlenx" && context.User.Discriminator != "1822")
+            {
+                var s = await context.Guild.GetMemberAsync(context.User.Id);
+                await s.SendMessageAsync("You do not have permission poo poo head");
+            }
+            else
+            {
+                var interactivity = context.Client.GetInteractivityModule();
+                
+                var u = await context.Guild.GetMemberAsync(context.User.Id);
 
+                await context.Channel.SendMessageAsync("Please enter your message u cunt");
+                var reply = await interactivity.WaitForMessageAsync
+                    (x => x.Channel == context.Channel && x.Author == context.User);
+                
+                var factory = new StdSchedulerFactory();
+                var scheduler = await factory.GetScheduler();
+
+                await scheduler.Start();
+
+                var job = JobBuilder.Create<reminders>()
+                    .WithIdentity(CreateMd5(reply.Message.Content),"group1").Build();
+                job.JobDataMap.Put("u", u);
+                job.JobDataMap.Put("m", reply.Message.Content);
+                
+                var trigger = TriggerBuilder.Create().WithIdentity(CreateMd5(reply.Message.Content) + "cum", "group1")
+                    .WithSchedule(CronScheduleBuilder.DailyAtHourAndMinute(nums[0], nums[1])).ForJob(job).StartNow().Build();
+                
+                await scheduler.ScheduleJob(job, trigger);
+
+                await context.Channel.SendMessageAsync("okay noted i will remind u hihi :blush:");
+                
+                var jobs = scheduler.GetCurrentlyExecutingJobs();
+                foreach (var joblol in jobs.Result)
+                {
+                    Console.WriteLine(joblol.JobDetail.Description);
+                }
+            }
+        }
+
+        private static string CreateMd5(string input)
+        {
+            // Use input string to calculate MD5 hash
+            using var md5 = System.Security.Cryptography.MD5.Create();
+            var inputBytes = Encoding.ASCII.GetBytes(input);
+            var hashBytes = md5.ComputeHash(inputBytes);
+            
+            // Convert the byte array to hexadecimal string
+            var sb = new StringBuilder();
+            foreach (var t in hashBytes)
+            {
+                sb.Append(t.ToString("X2"));
+            }
+            return sb.ToString();
+        }
+
+        private static async Task IrlSign(CommandContext context, string sign, int selection)
+        {
+            var url = "https://www.signingsavvy.com/search/" + sign;
             var signUrl = ExtractMedia(url);
-
+            
             if (signUrl != null)
             {
                 if (selection > 1)
                 {
-                    var OriginalLink = ExtractSecondUrl(url);
-                    await Context.Channel.SendMessageAsync("https://www.signingsavvy.com/" + ExtractMedia("https://www.signingsavvy.com/" + OriginalLink.Remove(OriginalLink.Length - 1) + selection));
+                    var originalLink = ExtractSecondUrl(url);
+                    await context.Channel.SendMessageAsync(ExtractMedia("https://www.signingsavvy.com/" + originalLink.Remove(originalLink.Length - 1) + selection));
+                    Bot.cache.Add(sign + " | " + selection, ExtractMedia("https://www.signingsavvy.com/" + originalLink.Remove(originalLink.Length - 1) + selection));
                 }
                 else
                 {
-                    await Context.Channel.SendMessageAsync("https://www.signingsavvy.com/" + signUrl);
+                    Bot.cache.Add(sign + " | " + selection, signUrl);
+                    await context.Channel.SendMessageAsync(signUrl);
                 }
             }
             else
             {
-                await GetOtherStuff(Context, url, signn, selection);
+                await GetOtherStuff(context, url, selection, sign);
             }
         }
 
-        private async Task GetOtherStuff(CommandContext Context, string html, string sign, int selection)
+        private static async Task GetOtherStuff(CommandContext context, string html, int selection, string sign)
         {
-            embed.Description = "Sign not found :confused:";
-            var list = ExtractSigns(sign);
+            Embed.Description = "Sign not found :confused:";
+            Embed.Title = char.ToUpper(sign[0]) + sign.Substring(1);
+
+            if (Bot.cacheList.ContainsKey(sign))
+            {
+                var message = Bot.cacheList[sign][0];
+                var interactivity = context.Client.GetInteractivityModule();
+                
+                Embed.Description = message + "\n" + "reply the number for the sign you want";
+                await context.Channel.SendMessageAsync("", false, Embed);
+                    
+                var reply = await interactivity.WaitForMessageAsync
+                    (x => x.Channel == context.Channel && x.Author == context.User && IsDigitsOnly(x.Content));
+                    
+                if (Bot.cache.ContainsKey(sign + " | " + selection + " | listed" + int.Parse(reply.Message.Content)))
+                {
+                    await context.Channel.SendMessageAsync(Bot.cache[sign + " | " + selection + " | listed" + int.Parse(reply.Message.Content)]);
+                }
+                else
+                {
+                    if (selection > 1)
+                    {
+                        var originalLink = ExtractSecondUrl(Bot.cacheList[sign][int.Parse(reply.Message.Content)]);
+                        await context.Channel.SendMessageAsync(ExtractMedia("https://www.signingsavvy.com/" + originalLink.Remove(originalLink.Length - 1) + selection));
+                        Bot.cache.Add(sign + " | " + selection + " | listed" + int.Parse(reply.Message.Content), 
+                            ExtractMedia("https://www.signingsavvy.com/" + originalLink.Remove(originalLink.Length - 1) + selection));
+                    }
+                    else
+                    {
+                        await context.Channel.SendMessageAsync(ExtractMedia(Bot.cacheList[sign][int.Parse(reply.Message.Content)]));
+                        Bot.cache.Add(sign + " | " + selection + " | listed" + int.Parse(reply.Message.Content), 
+                            ExtractMedia(Bot.cacheList[sign][int.Parse(reply.Message.Content)]));
+                    }
+                }
+            }
+            else
+            {
+                var list = ExtractSigns();
             if (list == null)
             {
-                await Context.Channel.SendMessageAsync("", false, embed);
+                await context.Channel.SendMessageAsync("", false, Embed);
             }
             else
             {
@@ -312,42 +454,60 @@ namespace SavvyBot.Commands
 
                 if (list.Count <= 1)
                 {
-                    await Context.Channel.SendMessageAsync("", false, embed);
+                    await context.Channel.SendMessageAsync("", false, Embed);
                 }
                 else
                 {
-                    var interactivity = Context.Client.GetInteractivityModule();
-                    var links = new string[list.Count];
+                    var interactivity = context.Client.GetInteractivityModule();
+                    
+                    var links = new List<string>();
                     var message = "";
+                    
+                    Bot.cacheList.Add(sign, new List<string>());
+                    Bot.cacheList[sign].Add("message");
+                    
                     for (var i = 0; i < list.Count; i++)
                     {
-                        links[i] = "https://www.signingsavvy.com/" + list[i];
+                        links.Add("https://www.signingsavvy.com/" + list[i]);
                         message += (i+1) + ": " + meaningList[i] + "\n";
+                        
+                        Bot.cacheList[sign].Add("https://www.signingsavvy.com/" + list[i]);
                     }
 
-                    embed.Description = message + "\n" + "reply the number for the sign you want";
-                    await Context.Channel.SendMessageAsync("", false, embed);
+                    Embed.Description = message + "\n" + "reply the number for the sign you want";
+                    Bot.cacheList[sign][0] = message + "\n" + "reply the number for the sign you want";
+                    
+                    await context.Channel.SendMessageAsync("", false, Embed);
                     
                     var reply = await interactivity.WaitForMessageAsync
-                        (x => x.Channel == Context.Channel && x.Author == Context.User && IsDigitsOnly(x.Content));
-
-                    if (selection > 1)
+                        (x => x.Channel == context.Channel && x.Author == context.User && IsDigitsOnly(x.Content));
+                    
+                    if (Bot.cache.ContainsKey(sign + " | " + selection + " | listed" + int.Parse(reply.Message.Content)))
                     {
-                        var OriginalLink = ExtractSecondUrl(links[Int32.Parse(reply.Message.Content)-1]);
-                        await Context.Channel.SendMessageAsync("https://www.signingsavvy.com/" + ExtractMedia("https://www.signingsavvy.com/" + OriginalLink.Remove(OriginalLink.Length - 1) + selection));
+                        await context.Channel.SendMessageAsync(Bot.cache[sign + " | " + selection + " | listed" + int.Parse(reply.Message.Content)]);
                     }
                     else
                     {
-                        await Context.Channel.SendMessageAsync("https://www.signingsavvy.com/" + ExtractMedia(links[Int32.Parse(reply.Message.Content)-1]));
+                        if (selection > 1)
+                        {
+                            var originalLink = ExtractSecondUrl(links[int.Parse(reply.Message.Content)-1]);
+                            await context.Channel.SendMessageAsync(ExtractMedia("https://www.signingsavvy.com/" + originalLink.Remove(originalLink.Length - 1) + selection));
+                            Bot.cache.Add(sign + " | " + selection + " | listed" + int.Parse(reply.Message.Content), 
+                                ExtractMedia("https://www.signingsavvy.com/" + originalLink.Remove(originalLink.Length - 1) + selection));
+                        }
+                        else
+                        {
+                            await context.Channel.SendMessageAsync(ExtractMedia(links[int.Parse(reply.Message.Content)-1]));
+                            Bot.cache.Add(sign + " | " + selection + " | listed" + int.Parse(reply.Message.Content), 
+                                ExtractMedia(links[int.Parse(reply.Message.Content)-1]));
+                        }
                     }
                 }
             }
+            }
         }
         
-        private static bool IsDigitsOnly(string str)
-        {
-            return str.All(c => c >= '0' && c <= '9');
-        }
+        private static bool IsDigitsOnly(string str) => str.All(c => c >= '0' && c <= '9');
 
         private static int? ContainsInt(IEnumerable<string> input)
         {
@@ -355,7 +515,7 @@ namespace SavvyBot.Commands
             {
                 if (IsDigitsOnly(word))
                 {
-                    return Int32.Parse(word);
+                    return int.Parse(word);
                 }
             }
             return null;
@@ -363,17 +523,18 @@ namespace SavvyBot.Commands
 
         private static string ExtractMedia(string url)
         {
-            doc = _web.Load(url);
+            _doc = Web.Load(url);
 
-            if (doc.DocumentNode.SelectSingleNode("//div[@class='videocontent']") == null) return null;
-            var search = doc.DocumentNode.CssSelect(".videocontent");
+            if (_doc.DocumentNode.SelectSingleNode("//div[@class='videocontent']") == null) return null;
+            var search = _doc.DocumentNode.CssSelect(".videocontent");
             var node = search.CssSelect("link").First();
-            return node.GetAttributeValue("href");
+            return "https://www.signingsavvy.com/" + node.GetAttributeValue("href");
         }
 
         private static string ExtractSecondUrl(string url)
         {
-            var load = _web.Load(url);
+            _doc = Web.Load(url);
+            var load = _doc;
             var search = load.DocumentNode.CssSelect(".signing_header");
             var node = search.CssSelect("a").Last();
             return node.GetAttributeValue("href");
@@ -381,66 +542,55 @@ namespace SavvyBot.Commands
 
         private static List<string> ExtractSynon()
         {
-            var list = new List<string>();
-            var search = doc.DocumentNode.CssSelect(".desc");
+            var search = _doc.DocumentNode.CssSelect(".desc");
             var nodes = search.CssSelect("a").ToArray();
-            foreach (var node in nodes)
-            {
-                var shitArr = node.InnerText.ToLower().Split(" ");
-                if (node.InnerText.ToLower() == "sign up now!" || shitArr[0] == "variation" || node.InnerText.ToLower() == "word lists") continue;
-                var kankerArr = node.InnerText.Split("(");
-                list.Add(kankerArr[0].ToLower().Replace(" ", string.Empty));
-            }
-            return list;
+            return (from node in nodes let shitArr = node.InnerText.ToLower().Split(" ") 
+                where node.InnerText.ToLower() != "sign up now!" && shitArr[0] != "variation" && node.InnerText.ToLower() != "word lists" 
+                select node.InnerText.Split("(") into kankerArr 
+                select kankerArr[0].ToLower().Replace(" ", string.Empty)).ToList();
         }
 
-        private static List<string> ExtractSigns(string sign)
+        private static List<string> ExtractSigns()
         {
-            if (doc.DocumentNode.SelectSingleNode("//div[@class='.search_results']") != null)
+            if (_doc.DocumentNode.SelectSingleNode("//div[@class='.search_results']") != null)
             {
                 return null;
             }
-            var search = doc.DocumentNode.CssSelect(".search_results");
+            var search = _doc.DocumentNode.CssSelect(".search_results");
 
-            var htmlNodes = search.CssSelect("a").ToArray();
+            var enumerable = search as HtmlNode[] ?? search.ToArray();
+            var htmlNodes = enumerable.CssSelect("a").ToArray();
 
-            return htmlNodes.Length > 10 ? null : search.CssSelect("a").Select(node => node.GetAttributeValue("href", "")).ToList();
+            return htmlNodes.Length > 10 ? null : enumerable.CssSelect("a").Select(node => node.GetAttributeValue("href", "")).ToList();
         }
 
         private static List<string> Text(string url)
         {
-            var list = new List<string>();
-            doc = _web.Load(url);
-            var search = doc.DocumentNode.CssSelect(".search_results");
-            foreach (var node in search.CssSelect("li"))
-            {
-                var result = node.CssSelect("em").First();
-                var internalArr = result.InnerHtml.Split("&quot");
-                var value = internalArr[0] + internalArr[1] + internalArr[2];
-                list.Add(value);
-            }
-            return list;
+            var search = Web.Load(url).DocumentNode.CssSelect(".search_results");
+            return (from node in search.CssSelect("li") select node.CssSelect("em").First() into result 
+                select result.InnerHtml.Split("&quot") into internalArr select internalArr[0] + internalArr[1] + internalArr[2]).ToList();
         }
-        protected bool CheckUrlStatus(string Website)
+
+        private static bool CheckUrlStatus(string website)
         {
             try
             {
-                var request = WebRequest.Create(Website) as HttpWebRequest;
-                request.Method = "HEAD";
-                using var response = (HttpWebResponse)request.GetResponse();
-                return response.StatusCode == HttpStatusCode.OK;
+                if (WebRequest.Create(website) is HttpWebRequest request)
+                {
+                    request.Method = "HEAD";
+                    using var response = (HttpWebResponse) request.GetResponse();
+                    return response.StatusCode == HttpStatusCode.OK;
+                }
             }
             catch
             {
                 return false;
             }
+            return false;
         }
 
-        private static void PeeLol()
-        {
-            Random n = new Random();
-            embed.ImageUrl = n.Next(0, 100) == 50 ? "https://cdn.discordapp.com/attachments/735641365320302593/767028760268111933/20200905232425_1.jpg" : "";
-        }
+        private static void PeeLol() => Embed.ImageUrl = new Random().Next(0, 100) == 50 ? "https://cdn.discordapp.com/attachments/735641365320302593/767028760268111933/20200905232425_1.jpg" : "";
+        
         private static string RemoveSpecialChars(string input)
         {
             var chars = new[]
